@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Embedded Signup</title>
+</head>
+<body>
+<div id="fb-root"></div>
+<button onclick="launchWhatsAppSignup()" style="background-color: #1877f2; border: 0; border-radius: 4px; color: #fff; cursor: pointer; font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; height: 40px; padding: 0 24px;">Login with Facebook</button>
+
+<p>Session info response:</p>
+<pre id="session-info-response"></pre>
+<br/>
+<p>SDK response:</p>
+<pre id="sdk-response"></pre>
+
+<!-- Facebook SDK initialization -->
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId            : '923144812975393',
+      autoLogAppEvents : true,
+      xfbml            : true,
+      version          : 'v22.0'
+    });
+  };
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
+<!-- Event listener for postMessage -->
+<script>
+  window.addEventListener('message', (event) => {
+    if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") {
+      return;
+    }
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'WA_EMBEDDED_SIGNUP') {
+        if (data.event === 'FINISH') {
+          const { phone_number_id, waba_id } = data.data;
+          console.log("Phone number ID:", phone_number_id, "WhatsApp Business Account ID:", waba_id);
+        } else if (data.event === 'CANCEL') {
+          const { current_step } = data.data;
+          console.warn("Cancelled at:", current_step);
+        } else if (data.event === 'ERROR') {
+          const { error_message } = data.data;
+          console.error("Error:", error_message);
+        }
+      }
+      document.getElementById("session-info-response").textContent = JSON.stringify(data, null, 2);
+    } catch {
+      console.log('Non-JSON Response:', event.data);
+    }
+  });
+</script>
+
+<!-- Facebook Login and Signup logic -->
+<script>
+  const fbLoginCallback = (response) => {
+    if (response.authResponse) {
+      const code = response.authResponse.code;
+      // You should send this code to your backend to exchange it for an access token
+    }
+    document.getElementById("sdk-response").textContent = JSON.stringify(response, null, 2);
+  }
+
+  const launchWhatsAppSignup = () => {
+    FB.login(fbLoginCallback, {
+      config_id: '1199550264916530', // replace with your config ID
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        featureType: '',
+        sessionInfoVersion: '2'
+      }
+    });
+  }
+</script>
+</body>
+</html>
